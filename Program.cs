@@ -1,61 +1,45 @@
 ﻿using System;
-using System.IO;
-using System.Security.Cryptography;
+using crypto.projects; // import the namespace where KeysManagement is located
 
-class Program
+namespace crypto.projects
 {
-    static void Main()
+    class Program
     {
-        try
+        static void Main()
         {
-            // Crear una instancia de la clase RSACryptoServiceProvider
-            using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
+            string jsonFilePath = @"C:\Users\danal\source\repos\profu\crypto.projects\";
+            HandleKeys handleKeys = new HandleKeys(); // Instance of KeysManagement for key management
+            Decompressor decompress = new Decompressor(); // Instance of Decompressor for decompression and signature verification
+
+            while (true)
             {
-                // Generar el par de claves pública y privada
-                RSAParameters privateKey = rsa.ExportParameters(true);
-                RSAParameters publicKey = rsa.ExportParameters(false);
+                Console.WriteLine("\nKeys Management Menu:");
+                Console.WriteLine("1. Generate RSA key pair");
+                Console.WriteLine("2. Generate Signature (compresses the signature, public key, and message)");
+                Console.WriteLine("3. Decompress and verify signature");
+                Console.WriteLine("4. Exit");
 
+                Console.Write("Select an option: ");
+                string option = Console.ReadLine();
 
-                // Guardar la clave pública en un archivo.
-                File.WriteAllText("publicKey.txt", ToXmlString(publicKey));
-
-                // Firmar el archivo de texto
-                string mensaje = "Hola, mundo!";
-                byte[] mensajeBytes = System.Text.Encoding.UTF8.GetBytes(mensaje);
-                byte[] firma = rsa.SignData(mensajeBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-
-                // Guardar la firma en un archivo
-                File.WriteAllBytes("firma.txt", firma);
-
-                // Verificar la firma
-                bool verificado = rsa.VerifyData(mensajeBytes, firma, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-                if (verificado)
+                switch (option)
                 {
-                    Console.WriteLine("La firma es válida.");
-                }
-                else
-                {
-                    Console.WriteLine("La firma es inválida.");
+                    case "1":
+                        handleKeys.GenerateKeys(); // Generates a new RSA key pair
+                        break;
+                    case "2":
+                        handleKeys.DisplayKeys(jsonFilePath); // Displays existing keys and allows message signing
+                        break;
+                    case "3":
+                        decompress.Decompress(jsonFilePath); // Decompresses and verifies a signature
+                        break;
+                    case "4":
+                        return;
+                    default:
+                        Console.WriteLine("Invalid option. Please try again.");
+                        break;
                 }
             }
-
-
-
-        }
-        catch (CryptographicException e)
-        {
-            Console.WriteLine($"Error de criptografía: {e.Message}");
-        }
-    }
-
-    // Tip Método para convertir los parámetros RSA a XML
-    static string ToXmlString(RSAParameters rsaParameters)
-    {
-        using (var sw = new System.IO.StringWriter())
-        {
-            var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
-            xs.Serialize(sw, rsaParameters);
-            return sw.ToString();
         }
     }
 }
